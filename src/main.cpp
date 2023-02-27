@@ -131,7 +131,7 @@ void cataControl(void*) {
 
 void firePult() {
   fireCata = true;
-  pros::delay(1000);
+  pros::delay(165);
   fireCata = false;
 }
 void revPult() {
@@ -350,21 +350,24 @@ void opcontrol() {
   //   leftMotors.move(leftVolt);
   //   rightMotors.move(rightVolt);
 
+    leftMotors.set_brake_modes(pros::E_MOTOR_BRAKE_HOLD);
+    rightMotors.set_brake_modes(pros::E_MOTOR_BRAKE_HOLD);
+    double turnImportance = 0.1;
+
+
   while (true) {
     //Driver Control
 
-
-
     int power = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
     int turn = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
-    int left = power + turn;
-    int right = power - turn;
-    leftMotors.move(left);
-    rightMotors.move(right);
+    int turnVolt = turn * 0.12;
+    int moveVolt = power * 0.12 * (1 - std::abs(turnVolt/12.0) * turnImportance);
+    int left = moveVolt + turnVolt;
+    int right = moveVolt - turnVolt;
+    leftMotors.move_voltage(left);
+    rightMotors.move_voltage(right);
 
     if(power + turn == 0){
-      leftMotors.set_brake_modes(pros::E_MOTOR_BRAKE_HOLD);
-      rightMotors.set_brake_modes(pros::E_MOTOR_BRAKE_HOLD);
       leftMotors.brake();
       rightMotors.brake();
     }
@@ -390,9 +393,12 @@ void opcontrol() {
     if(master.get_digital(pros::E_CONTROLLER_DIGITAL_X)){
       Expand();
     }
-    pros::delay(10);
+
     if(partner.get_digital(pros::E_CONTROLLER_DIGITAL_X)){
       Expand();
     }
+
+    pros::delay(10);
+
   }
 }
