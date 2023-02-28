@@ -1,6 +1,9 @@
 #include "main.h"
 #include "lemlib/api.hpp"
 #include "api.h"
+#include "pros/adi.hpp"
+#include "pros/motors.h"
+#include "pros/rtos.hpp"
 
 pros::Rotation CataRot(12);
 pros::Motor catapult(18);
@@ -18,6 +21,7 @@ pros::Imu imu1(17);
 pros::ADIDigitalOut expansion ('A');
 pros::ADIDigitalOut Bandboost ('B');
 pros::Rotation verticalRot(1, true);
+pros::ADIDigitalIn CataSwitch ('H');
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 pros::Controller partner(pros::E_CONTROLLER_PARTNER);
@@ -107,31 +111,46 @@ void Expand (){
   expansion.set_value(true);
 }
 
+// bool CataLimit = false;
+// void Limit_Control (void*){
+//   while(true){
+//     if(CataSwitch.get_value() == true){
+//       pros::delay(55);
+//       CataLimit = true;
+
+//     }else{
+//       CataLimit = false;
+//     }
+//   }
+//   pros::delay(10);
+// }
+
+
+
+
 bool fireCata = false;
 bool revCata = false;
 void cataControl(void*) {
   CataRot.reset_position();
   CataRot.reverse();
   CataRot.set_data_rate(10);
+  catapult.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+
 
     while(true) {
-        // if(revCata == true){
-        //   catapult.move(-127);
-        //   pros::delay(200);
-        //   catapult.move(0);
-        if (fireCata == true || CataRot.get_angle() < 8625) {
+        if (fireCata == true || CataRot.get_angle() < 8350) {
           catapult.move(127);
+        }else if(CataRot.get_angle() < 8650){
+          catapult.move(89);
         }else{
-          catapult.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
           catapult.brake();
         }
-    pros::delay(10);
-    }
+  pros::delay(10);
 }
-
+}
 void firePult() {
   fireCata = true;
-  pros::delay(165);
+  pros::delay(1750);
   fireCata = false;
 }
 void revPult() {
@@ -155,7 +174,7 @@ void revPult() {
  */
 void initialize() {
 	pros::lcd::initialize();
-	pros::Task screen_task(screen);
+	//pros::Task screen_task(screen);
   pros::Task Cata_task(cataControl);
   chassis.calibrate();
   chassis.setPose(60, -35, 90); //Change 180 when Liam tells u orientation
@@ -352,26 +371,29 @@ void opcontrol() {
 
     leftMotors.set_brake_modes(pros::E_MOTOR_BRAKE_HOLD);
     rightMotors.set_brake_modes(pros::E_MOTOR_BRAKE_HOLD);
-    double turnImportance = 0.1;
-
 
   while (true) {
     //Driver Control
 
     int power = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
     int turn = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
-    int turnVolt = turn * 0.12;
-    int moveVolt = power * 0.12 * (1 - std::abs(turnVolt/12.0) * turnImportance);
-    int left = moveVolt + turnVolt;
-    int right = moveVolt - turnVolt;
-    leftMotors.move_voltage(left);
-    rightMotors.move_voltage(right);
+    double CurvedPower = pow(power, 3) / pow(127, 2);
+    double CurvedTurn = pow(turn, 3) / pow(127, 2);
+    int left = CurvedPower + CurvedTurn;
+    int right = CurvedPower - CurvedTurn;
+    leftMotors.move(left);
+    rightMotors.move(right);
 
     if(power + turn == 0){
       leftMotors.brake();
       rightMotors.brake();
     }
 
+
+
+
+
+    
 
     //Intake
     if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R2)){
