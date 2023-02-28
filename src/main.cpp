@@ -111,19 +111,19 @@ void Expand (){
   expansion.set_value(true);
 }
 
-// bool CataLimit = false;
-// void Limit_Control (void*){
-//   while(true){
-//     if(CataSwitch.get_value() == true){
-//       pros::delay(55);
-//       CataLimit = true;
+bool CataLimit = false;
+void Limit_Control (void*){
+  while(true){
+    if(CataSwitch.get_value() == true){
+      pros::delay(55);
+      CataLimit = true;
 
-//     }else{
-//       CataLimit = false;
-//     }
-//   }
-//   pros::delay(10);
-// }
+    }else{
+      CataLimit = false;
+    }
+  }
+  pros::delay(10);
+}
 
 
 
@@ -138,10 +138,8 @@ void cataControl(void*) {
 
 
     while(true) {
-        if (fireCata == true || CataRot.get_angle() < 8350) {
+        if (fireCata == true || CataLimit == false) {
           catapult.move(127);
-        }else if(CataRot.get_angle() < 8650){
-          catapult.move(89);
         }else{
           catapult.brake();
         }
@@ -176,6 +174,7 @@ void initialize() {
 	pros::lcd::initialize();
 	//pros::Task screen_task(screen);
   pros::Task Cata_task(cataControl);
+  pros::Task Cata_task2(Limit_Control);
   chassis.calibrate();
   chassis.setPose(60, -35, 90); //Change 180 when Liam tells u orientation
   //chassis.setPose(0, 0, 0);
@@ -388,12 +387,6 @@ void opcontrol() {
       leftMotors.brake();
       rightMotors.brake();
     }
-
-
-
-
-
-    
 
     //Intake
     if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R2)){
