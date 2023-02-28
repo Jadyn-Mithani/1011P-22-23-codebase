@@ -5,7 +5,7 @@
 #include "pros/motors.h"
 #include "pros/rtos.hpp"
 
-pros::Rotation CataRot(12);
+//pros::Rotation CataRot(12);
 pros::Motor catapult(18);
 pros::Motor lF(15);
 pros::Motor lM(6);
@@ -86,7 +86,7 @@ void screen(void*) {
     pros::lcd::print(3, "IntakeEfficency: %f", intake.get_efficiency());
     pros::lcd::print(4, "CatapultPower: %f", catapult.get_voltage());
     pros::lcd::print(5, "CatapultEfficency: %f", catapult.get_efficiency());
-    pros::lcd::print(6, "CataRot: %f", CataRot.get_angle()/1000);
+    // pros::lcd::print(6, "CataRot: %f", CataRot.get_angle()/1000);
 
     // delay to save resources
     pros::delay(10);
@@ -131,11 +131,10 @@ void Limit_Control (void*){
 bool fireCata = false;
 bool revCata = false;
 void cataControl(void*) {
-  CataRot.reset_position();
-  CataRot.reverse();
-  CataRot.set_data_rate(10);
+  // CataRot.reset_position();
+  // CataRot.reverse();
+  // CataRot.set_data_rate(10);
   catapult.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-
 
     while(true) {
         if (fireCata == true || CataLimit == false) {
@@ -145,6 +144,7 @@ void cataControl(void*) {
         }
   pros::delay(10);
 }
+
 }
 void firePult() {
   fireCata = true;
@@ -246,8 +246,8 @@ chassis.turnTo(-35, 12, 1000);
 chassis.moveTo(-35, 12, 1000);
 chassis.moveTo(-28, 20, 1500, 40);
 chassis.turnTo(-60, -20, 1000, true);
-chassis.moveTo(-60, -20, 1000);
-chassis.turnTo(-53, -53, 1000);
+chassis.moveTo(-60, -20, 1000, 80);
+chassis.turnTo(-53, -53, 1000, true);
 firePult();
 //good
 
